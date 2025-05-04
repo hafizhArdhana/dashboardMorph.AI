@@ -7,7 +7,6 @@ st.set_page_config(page_title="Morph.AI Dashboard Kinerja", layout="wide")
 st.markdown(
     """
     <style>
-    /* Gradasi header Morph.AI */
     .morph-header {
         width: 100vw;
         min-height: 120px;
@@ -41,27 +40,17 @@ st.markdown(
         margin-bottom: 0.2rem;
         text-shadow: 0 1px 6px rgba(80,80,120,0.08);
     }
-    .metric-card {
-        background: #fff;
-        border-radius: 15px;
-        padding: 20px;
-        margin: 10px;
-        text-align: center;
-        box-shadow: 0 8px 32px 0 rgba(0,0,0,0.12);
-        border: 1.5px solid #f3f4f6;
-        transition: transform 0.2s, box-shadow 0.2s, border 0.2s;
-        min-width: 220px;
-        min-height: 160px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-    .metric-card:hover {
-        transform: scale(1.04);
-        border: 1.5px solid #8B5CF6;
-        box-shadow: 0 12px 32px 0 rgba(139,92,246,0.13);
-        background: #f8f7fc;
+    .badge-karyawan {
+        display: inline-block;
+        background: linear-gradient(90deg, #3B82F6 0%, #8B5CF6 60%, #EC4899 100%);
+        color: white;
+        font-weight: 600;
+        padding: 7px 18px;
+        border-radius: 999px;
+        margin: 4px 8px 4px 0;
+        font-size: 1.06rem;
+        box-shadow: 0 2px 8px 0 rgba(139,92,246,0.09);
+        letter-spacing: 0.5px;
     }
     </style>
     """,
@@ -78,9 +67,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-# --- MASKOT (JIKA INGIN DITAMBAH, BISA TARUH DI SINI) ---
-# st.image("https://pplx-res.cloudinary.com/image/private/user_uploads/ArRjArACAiIPaIT/WhatsApp-Image-2025-04-30-at-14.03.36_7e9724e4.jpg", width=180)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -150,7 +136,7 @@ if kpi_file and survey_file:
         y='Jumlah Tugas Selesai',
         text='Jumlah Tugas Selesai',
         color='Jumlah Tugas Selesai',
-        color_continuous_scale=px.colors.sequential.Plasma,
+        color_continuous_scale=['#3B82F6', '#8B5CF6', '#EC4899'],
         range_y=[0, max(filtered_kpi['Jumlah Tugas Selesai'].max(), 40)]
     )
     fig1.add_shape(
@@ -205,15 +191,47 @@ if kpi_file and survey_file:
 
     st.markdown("---")
 
-    # --- TAMPILKAN SURVEY BULANAN ---
-    st.markdown("### 📝 Hasil Survey Bulanan")
-    for _, row in filtered_survey.iterrows():
-        st.markdown(f"<div class='metric-card'><b>{row['Karyawan']} ({row['ID']})</b><br>", unsafe_allow_html=True)
-        for col in survey_data.columns:
-            if col not in ['Karyawan', 'ID']:
-                st.markdown(f"<b>{col}:</b> {row[col]}", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
+    # --- VISUALISASI INTERAKTIF SURVEY BULANAN ---
+    st.markdown("### 📊 Visualisasi Hasil Survey Bulanan")
+    survey_cols = [col for col in survey_data.columns if col not in ['Karyawan', 'ID', 'Employee Name', 'Employee ID']]
+    selected_survey_col = st.selectbox("Pilih Kolom Survey untuk Visualisasi:", survey_cols)
+
+    # Tampilkan distribusi jawaban (top 10)
+    jawaban_counts = survey_data[selected_survey_col].value_counts().reset_index()
+    jawaban_counts.columns = ['Jawaban', 'Jumlah']
+
+    fig_survey = px.bar(
+        jawaban_counts.head(10),
+        x='Jumlah',
+        y='Jawaban',
+        orientation='h',
+        color='Jawaban',
+        color_discrete_sequence=['#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#F97316', '#EF4444'],
+        title=f"Distribusi Jawaban: {selected_survey_col}"
+    )
+    fig_survey.update_layout(
+        yaxis={'categoryorder':'total ascending'},
+        showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font_color='#222'
+    )
+    st.plotly_chart(fig_survey, use_container_width=True)
+
+    # --- TAMPILKAN KARYAWAN UNTUK SETIAP VALUE (NAMA, BUKAN ID) ---
+    st.markdown("#### 👥 Karyawan yang Memilih Jawaban Tertentu")
+    value_selected = st.selectbox(
+        f"Pilih jawaban pada '{selected_survey_col}' untuk melihat siapa saja yang memilihnya:",
+        jawaban_counts['Jawaban']
+    )
+    karyawan_list = survey_data[survey_data[selected_survey_col] == value_selected]['Karyawan'].tolist()
+    if karyawan_list:
+        st.markdown(
+            "".join([f"<span class='badge-karyawan'>{nama}</span>" for nama in karyawan_list]),
+            unsafe_allow_html=True
+        )
+    else:
+        st.info("Tidak ada karyawan yang memilih jawaban ini.")
 
 else:
     st.info("Silakan upload file KPI dan Survey Bulanan (format CSV) melalui sidebar untuk mulai menampilkan dashboard.")
