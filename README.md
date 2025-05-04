@@ -1,7 +1,4 @@
 # DASHBOARD MORPH.AI
-
-DASHBOARD MORPH.AI adalah sebuah aplikasi berbasis AI yang dirancang untuk membantu manajer dalam menganalisis kinerja karyawan melalui input KPI dan hasil survey bulanan. Dashboard ini menampilkan ringkasan dan rekomendasi otomatis yang dapat digunakan untuk pengambilan keputusan berbasis data.
-
 ## 📂 Contents / Fitur Utama
 
 - ✅ **Input File**
